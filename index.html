@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Interval Timer</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <main>
+        <h1 id="timer">00:00</h1>
+
+        <button id="start" onclick="startCountdown()">Start</button>
+        <button id="stop" onclick="clearInterval(timer); timerText.textContent = 'Timer Stopped';">Stop</button>
+        <button id="pause" onclick="togglePause()">Pause</button>
+
+        <div id="list"></div>
+
+        <div id="listActions">
+            <button id="clear" onclick="exercises = []; updateExerciseList();">Clear</button>
+            <button id="openSave">Save</button>
+        </div>
+
+        <div id="Addexercise">
+          <input type="text" id="exerciseInput" placeholder="Exercise">
+          <input type="time" id="timeInput" value="00:00">
+          <button id="addExercise" onclick="addExercise()">+</button>
+        </div>
+
+        <dialog id="savePopup">
+            <h2>Save List</h2>
+            <p>Do you want to save this list?</p>
+            <input type="text" id="listName" placeholder="List Name">
+            <button id="closeSave">Cancel</button>
+            <button id="saveList">Save</button>
+        </dialog>
+
+        <div id="savedLists">
+            <h2>Saved Lists</h2>
+            <ul id="savedListContainer"></ul>
+        </div>
+    </main>
+
+    <footer>
+        © 2026 ncjvdw ·
+        <a href="https://github.com/ncjvdw/IntervalTimer">GitHub</a>
+    </footer>
+
+    <audio id="beep" preload="auto">
+        <source
+            src="https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3"
+            type="audio/mpeg">
+    </audio>
+
+    <script>
+        let timer;
+        let timerText = document.getElementById("timer");
+        let timeInput = document.getElementById("timeInput");
+        let exercises = [];
+        exercises = JSON.parse(localStorage.getItem('__currentList__') || '[]');
+        let transitioning = false;
+
+        function updateExerciseList() {
+            let str = '<ul>';
+
+            exercises.forEach(function(exercise, index) {
+                str += `
+                    <li>
+                        ${exercise.exercise} (${exercise.time})
+                        <button type="button" onclick="deleteExercise(${index})">Delete</button>
+                    </li>
+                `;
+            });
+
+            str += '</ul>';
+
+            document.getElementById("list").innerHTML = str;
+
+            localStorage.setItem(
+                '__currentList__',
+                JSON.stringify(exercises)
+            );
+        }
+
+        function deleteExercise(index) {
+            exercises.splice(index, 1);
+            updateExerciseList();
+        }
+
+        function addExercise() {
+            let exerciseInput = document.getElementById("exerciseInput");
+            let exercise = exerciseInput.value;
+            let time = timeInput.value;
+
+            if (!time) {
+                alert("Please set a valid time.");
+                return;
+            }
+
+            exercises.push({
+                exercise,
+                time
+            });
+
+            exerciseInput.value = "";
+            timeInput.value = "00:00";
+
+            updateExerciseList();
+        }
+
+        function renderTimer(name, count) {
+            timerText.innerHTML = `
+                <span class="ex-name">${name}</span>
+                <span class="ex-time">${Math.floor(count / 60)}:${String(count % 60).padStart(2, '0')}</span>
+            `;
+        }
+
+        function speakExercise(name) {
+            if (!("speechSynthesis" in window)) return;
+
+            window.speechSynthesis.cancel();
+
+            const utterance =
+                new SpeechSynthesisUtterance(String(name));
+
+            utterance.lang = "en-US";
+            utterance.volume = 1;
+            utterance.rate = 1;
+            utterance.pitch = 1;
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function startCountdown() {
+            if (exercises.length === 0) {
+                alert("Please add at least one exercise.");
+                return;
+            }
+
+            if ("speechSynthesis" in window) {
+                window.speechSynthesis.cancel();
+
+                const unlock =
+                    new SpeechSynthesisUtterance(" ");
+
+                unlock.volume = 0;
+
+                window.speechSynthesis.speak(unlock);
+            }
+
+            timerText.classList.add(
+                'no-anim-inner',
+                'no-anim-outer'
+            );
+
+            timerText.style.setProperty(
+                '--inner-progress',
+                1
+            );
+
+            timerText.style.setProperty(
+                '--outer-progress',
+                1
+            );
+
+            requestAnimationFrame(() => {
+                void timerText.offsetWidth;
+
+                requestAnimationFrame(() => {
+                    timerText.classList.remove(
+                        'no-anim-inner',
+                        'no-anim-outer'
+                    );
+                });
+            });
+
+            const delay = (ms) =>
+                new Promise(resolve => setTimeout(resolve, ms));
+
+            for (let i = 0; i < 3; i++) {
+                const beepAudio =
+                    document.getElementById("beep");
+
+                beepAudio.volume = 0.2;
+                beepAudio.currentTime = 0;
+
+                beepAudio.play().catch(() => {});
+
+                timerText.textContent =
+                    `Starting in ${3 - i}...`;
+
+                await delay(1000);
+            }
+
+            const totalListSeconds =
+                exercises.reduce((sum, ex) => {
+                    const [m, s] =
+                        ex.time.split(":");
+
+                    return sum +
+                        parseInt(m, 10) * 60 +
+                        parseInt(s, 10);
+                }, 0);
+
+            let totalElapsed = 0;
+
+            let currentExerciseIndex = 0;
+
+            let [mins, secs] =
+                exercises[currentExerciseIndex]
+                    .time
+                    .split(":");
+
+            let count =
+                parseInt(mins, 10) * 60 +
+                parseInt(secs, 10);
+
+            let exerciseDuration = count;
+
+            renderTimer(
+                exercises[currentExerciseIndex].exercise,
+                count
+            );
+
+            speakExercise(
+                exercises[currentExerciseIndex].exercise
+            );
+
+            timer = setInterval(() => {
+                if (isPaused || transitioning) return;
+
+                count--;
+                totalElapsed++;
+
+                timerText.style.setProperty(
+                    '--inner-progress',
+                    Math.max(count, 0) / exerciseDuration
+                );
+
+                timerText.style.setProperty(
+                    '--outer-progress',
+                    1 - totalElapsed / totalListSeconds
+                );
+
+                renderTimer(
+                    exercises[currentExerciseIndex].exercise,
+                    count
+                );
+
+                if (
+                    count === 3 ||
+                    count === 2 ||
+                    count === 1
+                ) {
+                    const beepAudio =
+                        document.getElementById("beep");
+
+                    beepAudio.volume = 0.2;
+                    beepAudio.currentTime = 0;
+
+                    beepAudio.play().catch(() => {});
+                }
+
+                if (count <= 0) {
+                    timerText.classList.add(
+                        'no-anim-inner'
+                    );
+
+                    timerText.style.setProperty(
+                        '--inner-progress',
+                        0
+                    );
+
+                    void timerText.offsetWidth;
+
+                    currentExerciseIndex++;
+
+                    if (
+                        currentExerciseIndex <
+                        exercises.length
+                    ) {
+                        transitioning = true;
+
+                        setTimeout(() => {
+                            speakExercise(
+                                exercises[
+                                    currentExerciseIndex
+                                ].exercise
+                            );
+
+                            [mins, secs] =
+                                exercises[
+                                    currentExerciseIndex
+                                ].time.split(":");
+
+                            count =
+                                parseInt(mins, 10) * 60 +
+                                parseInt(secs, 10);
+
+                            exerciseDuration = count;
+
+                            timerText.classList.add(
+                                'no-anim-inner'
+                            );
+
+                            timerText.style.setProperty(
+                                '--inner-progress',
+                                1
+                            );
+
+                            requestAnimationFrame(() => {
+                                void timerText.offsetWidth;
+
+                                requestAnimationFrame(() => {
+                                    timerText.classList.remove(
+                                        'no-anim-inner'
+                                    );
+                                });
+                            });
+
+                            renderTimer(
+                                exercises[
+                                    currentExerciseIndex
+                                ].exercise,
+                                count
+                            );
+
+                            transitioning = false;
+                        }, 50);
+
+                    } else {
+                        clearInterval(timer);
+
+                        timerText.textContent =
+                            "Workout Complete!";
+                    }
+                }
+            }, 1000);
+        }
+
+        let isPaused = false;
+
+        function togglePause() {
+            if (!timer) return;
+
+            isPaused = !isPaused;
+
+            document.getElementById("pause").textContent =
+                isPaused ? "Resume" : "Pause";
+        }
+
+        (() => {
+            let wakeLock = null;
+
+            async function keepScreenAwake() {
+                if (!("wakeLock" in navigator)) return;
+
+                try {
+                    wakeLock =
+                        await navigator.wakeLock.request("screen");
+
+                    wakeLock.addEventListener(
+                        "release",
+                        () => {
+                            wakeLock = null;
+                        }
+                    );
+                } catch (err) {}
+            }
+
+            keepScreenAwake();
+
+            document.addEventListener(
+                "visibilitychange",
+                () => {
+                    if (
+                        document.visibilityState ===
+                        "visible"
+                    ) {
+                        keepScreenAwake();
+                    }
+                }
+            );
+        })();
+    </script>
+
+    <script>
+        const savePopup =
+            document.getElementById("savePopup");
+
+        const openSave =
+            document.getElementById("openSave");
+
+        const closeSave =
+            document.getElementById("closeSave");
+
+        openSave.addEventListener(
+            "click",
+            () => savePopup.showModal()
+        );
+
+        closeSave.addEventListener(
+            "click",
+            () => savePopup.close()
+        );
+
+        function renderSavedLists() {
+            const container =
+                document.getElementById(
+                    "savedListContainer"
+                );
+
+            container.innerHTML = "";
+
+            for (
+                let i = 0;
+                i < localStorage.length;
+                i++
+            ) {
+                const key =
+                    localStorage.key(i);
+
+                if (key === '__currentList__') continue;
+
+                const li =
+                    document.createElement("li");
+
+                li.innerHTML = `
+                    <span>${key}</span>
+                    <button
+                        type="button"
+                        onclick="loadSavedList('${key}')"
+                    >
+                        Load
+                    </button>
+                    <button
+                        type="button"
+                        onclick="deleteSavedList('${key}')"
+                    >
+                        Delete
+                    </button>
+                `;
+
+                container.appendChild(li);
+            }
+        }
+
+        function loadSavedList(key) {
+            const saved =
+                localStorage.getItem(key);
+
+            if (!saved) return;
+
+            try {
+                exercises = JSON.parse(saved);
+                updateExerciseList();
+            } catch (err) {
+                alert("Saved list is invalid.");
+            }
+        }
+
+        function deleteSavedList(key) {
+            localStorage.removeItem(key);
+            renderSavedLists();
+        }
+
+        document.getElementById("saveList").onclick =
+            function() {
+                const name =
+                    document.getElementById(
+                        "listName"
+                    ).value.trim();
+
+                if (!name) {
+                    alert("Enter a list name.");
+                    return;
+                }
+
+                localStorage.setItem(
+                    name,
+                    JSON.stringify(exercises)
+                );
+
+                savePopup.close();
+                renderSavedLists();
+            };
+
+        renderSavedLists();
+        updateExerciseList();
+    </script>
+
+</body>
+</html>

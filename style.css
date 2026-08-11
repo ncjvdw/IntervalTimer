@@ -1,0 +1,405 @@
+* {
+  box-sizing: border-box;
+}
+
+
+@property --inner-progress {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+
+@property --outer-progress {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+
+main {
+  width: 100%;
+  max-width: 520px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+
+footer {
+  margin-top: auto;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(224, 224, 224, 0.45);
+}
+
+
+footer a {
+  color: rgba(151, 201, 149, 0.55);
+  text-decoration: underline;
+}
+
+
+footer a:hover {
+  color: #ffffff;
+}
+
+
+#timer {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  margin: 2.5rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 50%;
+  color: #ffffff;
+  padding: 0 1.5rem;
+}
+
+
+#timer .ex-name {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #9CFC97;
+}
+
+
+#timer .ex-time {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #9CFC97;
+}
+
+
+#timer::before {
+  content: "";
+  position: absolute;
+  inset: -28px;
+  border-radius: 50%;
+  transform: translateZ(0);
+  background: conic-gradient(
+    #6BA368 calc(var(--outer-progress, 1) * 360deg),
+    rgba(81, 91, 58, 0.28) 0deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 6px),
+    #000 calc(100% - 6px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 6px),
+    #000 calc(100% - 6px)
+  );
+  transition: --outer-progress 0.5s linear;
+}
+
+
+#timer::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  transform: translateZ(0);
+  background: conic-gradient(
+    #9CFC97 calc(var(--inner-progress, 1) * 360deg),
+    rgba(81, 91, 58, 0.24) 0deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 6px),
+    #000 calc(100% - 6px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 6px),
+    #000 calc(100% - 6px)
+  );
+  box-shadow:
+    0 0 calc(18px * var(--inner-progress, 1))
+    rgba(156, 252, 151, calc(0.55 * var(--inner-progress, 1)));
+  transition: --inner-progress 0.5s linear;
+}
+
+
+button {
+  background: rgba(81, 91, 58, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(156, 252, 151, 0.28);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  margin: 0.25rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+
+button:hover {
+  background: rgba(107, 163, 104, 0.3);
+}
+
+
+#start {
+  border-color: #9CFC97;
+  color: #9CFC97;
+}
+
+
+#stop {
+  border-color: #9CFC97;
+  color: #9CFC97;
+}
+
+
+#list {
+  margin: 1.5rem 0 0.5rem;
+  text-align: left;
+}
+
+
+#list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+
+#list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(81, 91, 58, 0.14);
+  border: 1px solid rgba(156, 252, 151, 0.16);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+
+#listActions {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+
+#listActions button {
+  flex: 1;
+  max-width: 150px;
+  margin: 0;
+}
+
+
+#Addexercise {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px 46px;
+  align-items: stretch;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+}
+
+
+#Addexercise input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 46px;
+  min-width: 0;
+  margin: 0;
+  background: rgba(81, 91, 58, 0.16);
+  border: 1px solid rgba(156, 252, 151, 0.25);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 0 0.75rem;
+}
+
+
+#Addexercise #exerciseInput {
+  width: 100%;
+  min-width: 0;
+}
+
+
+#Addexercise #timeInput {
+  width: 92px;
+  min-width: 92px;
+  max-width: 92px;
+  height: 46px;
+  padding: 0 0.25rem;
+  font-size: 0.95rem;
+  color: #ffffff;
+  background: rgba(81, 91, 58, 0.16);
+  border: 1px solid rgba(156, 252, 151, 0.25);
+  border-radius: 6px;
+}
+
+
+#Addexercise #timeInput::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+}
+
+
+#Addexercise #addExercise {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  max-width: 46px;
+  max-height: 46px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+
+dialog {
+  background: rgba(0, 0, 0, 0.96);
+  color: #ffffff;
+  border: 1px solid rgba(156, 252, 151, 0.3);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+
+dialog input {
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(156, 252, 151, 0.25);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin: 0.75rem 0;
+  width: 100%;
+}
+
+
+#savedLists {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+
+#savedListContainer {
+  list-style: none;
+  padding: 0;
+}
+
+
+#savedListContainer li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(81, 91, 58, 0.14);
+  border: 1px solid rgba(156, 252, 151, 0.16);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+
+#timer.no-anim-outer::before {
+  transition: none !important;
+}
+
+
+#timer.no-anim-inner::after {
+  transition: none !important;
+}
+
+
+@media (max-width: 600px) {
+  main {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.25rem;
+    overflow-x: hidden;
+  }
+
+
+  #timer {
+    width: 260px;
+    height: 260px;
+    padding: 0 1rem;
+  }
+
+
+  #timer .ex-name {
+    font-size: 0.95rem;
+  }
+
+
+  #timer .ex-time {
+    font-size: 1.7rem;
+  }
+
+
+  #timer::before {
+    inset: -16px;
+  }
+
+
+  #timer::after {
+    inset: 6px;
+  }
+
+
+  button {
+    padding: 0.65rem 1.1rem;
+    font-size: 1rem;
+    min-height: 44px;
+  }
+
+
+  #listActions {
+    gap: 0.35rem;
+    margin: 0.25rem 0 0.5rem;
+  }
+
+
+  #listActions button {
+    flex: 1;
+    max-width: 130px;
+    margin: 0;
+  }
+
+
+  dialog {
+    width: calc(100% - 2rem);
+    max-width: 340px;
+    padding: 1.25rem;
+  }
+
+
+  #list li,
+  #savedListContainer li {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+}
