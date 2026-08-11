@@ -56,12 +56,16 @@
     </audio>
 
     <script>
+        if ('audioSession' in navigator) {
+        navigator.audioSession.type = 'ambient'; 
+        }
         let timer;
         let timerText = document.getElementById("timer");
         let timeInput = document.getElementById("timeInput");
         let exercises = [];
         exercises = JSON.parse(localStorage.getItem('__currentList__') || '[]');
         let transitioning = false;
+
 
         function updateExerciseList() {
             let str = '<ul>';
@@ -139,6 +143,8 @@
                 alert("Please add at least one exercise.");
                 return;
             }
+
+            antiScreenLock();
 
             if ("speechSynthesis" in window) {
                 window.speechSynthesis.cancel();
@@ -352,7 +358,7 @@
                 isPaused ? "Resume" : "Pause";
         }
 
-        (() => {
+        const antiScreenLock = async () => {
             let wakeLock = null;
 
             async function keepScreenAwake() {
@@ -384,7 +390,7 @@
                     }
                 }
             );
-        })();
+        };
     </script>
 
     <script>
