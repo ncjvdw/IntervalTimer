@@ -1,2 +1,6 @@
-# Local HTTPS certificates
 *.pem
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+server.py
