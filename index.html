@@ -57,8 +57,25 @@
 
             <input type="text" id="listName" placeholder="List Name" maxlength="40">
 
-            <button id="closeSave">Cancel</button>
-            <button id="saveList">Save</button>
+            <div class="dialog-actions">
+                <button id="closeSave">Cancel</button>
+                <button id="saveList">Save</button>
+            </div>
+        </dialog>
+
+        <dialog id="editPopup">
+            <h2>Edit Exercise</h2>
+            <p>Update exercise name and time.</p>
+
+            <div class="edit-inputs">
+                <input type="text" id="editExerciseInput" placeholder="Exercise" maxlength="40">
+                <input type="time" id="editTimeInput" value="00:00">
+            </div>
+
+            <div class="dialog-actions">
+                <button id="closeEdit">Cancel</button>
+                <button id="saveEdit">Save</button>
+            </div>
         </dialog>
 
         <div id="savedLists">
@@ -91,13 +108,29 @@
         <a href="https://github.com/ncjvdw/IntervalTimer">GitHub</a> · V1.1.0
     </footer>
 
-    <audio id="beep" preload="auto">
-        <source
-            src="./beep.mp3"
-            type="audio/mpeg">
-    </audio>
-
     <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playWebAudioBeep(frequency = 800, duration = 0.4) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.frequency.value = frequency;
+            gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
         if ('audioSession' in navigator) {
             navigator.audioSession.type = 'ambient';
         }
@@ -124,6 +157,7 @@
                 str += `
                     <li>
                         ${exercise.exercise} (${exercise.time})
+                        <button type="button" onclick="openEditModal(${index})">Edit</button>
                         <button type="button" onclick="deleteExercise(${index})">Delete</button>
                     </li>
                 `;
@@ -228,8 +262,7 @@
             if ("speechSynthesis" in window) {
                 window.speechSynthesis.cancel();
 
-                const unlock =
-                    new SpeechSynthesisUtterance(" ");
+                const unlock = new SpeechSynthesisUtterance(" ");
 
                 unlock.volume = 0;
 
@@ -268,13 +301,7 @@
 
 
             for (let i = 0; i < 3; i++) {
-                const beepAudio =
-                    document.getElementById("beep");
-
-                beepAudio.volume = 0.2;
-                beepAudio.currentTime = 0;
-
-                beepAudio.play().catch(() => {});
+                playWebAudioBeep();
 
                 timerName.textContent = "";
                 timerTime.textContent = `Starting in ${3 - i}...`;
@@ -358,13 +385,7 @@
                     count <= 3 &&
                     count > 0
                 ) {
-                    const beepAudio =
-                        document.getElementById("beep");
-
-                    beepAudio.volume = 0.2;
-                    beepAudio.currentTime = 0;
-
-                    beepAudio.play().catch(() => {});
+                    playWebAudioBeep();
                 }
 
 
@@ -442,6 +463,7 @@
                         timer = null;
 
                         timerName.textContent = "";
+                        speakExercise("Workout Complete!");
                         timerTime.textContent = "Workout Complete!";
                     }
                 }
@@ -516,6 +538,17 @@
         const closeSave =
             document.getElementById("closeSave");
 
+        const editPopup =
+            document.getElementById("editPopup");
+
+        const closeEdit =
+            document.getElementById("closeEdit");
+
+        const saveEdit =
+            document.getElementById("saveEdit");
+
+        let currentEditIndex = null;
+
 
         openSave.addEventListener(
             "click",
@@ -527,6 +560,44 @@
             "click",
             () => savePopup.close()
         );
+
+
+        closeEdit.addEventListener(
+            "click",
+            () => editPopup.close()
+        );
+
+
+        function openEditModal(index) {
+            currentEditIndex = index;
+            const targetExercise = exercises[index];
+
+            document.getElementById("editExerciseInput").value = targetExercise.exercise;
+            document.getElementById("editTimeInput").value = targetExercise.time;
+
+            editPopup.showModal();
+        }
+
+
+        saveEdit.addEventListener("click", () => {
+            if (currentEditIndex === null) return;
+
+            const newExercise = document.getElementById("editExerciseInput").value;
+            const newTime = document.getElementById("editTimeInput").value;
+
+            if (!newTime) {
+                alert("Please set a valid time.");
+                return;
+            }
+
+            exercises[currentEditIndex] = {
+                exercise: newExercise,
+                time: newTime
+            };
+
+            updateExerciseList();
+            editPopup.close();
+        });
 
 
         function renderSavedLists() {
@@ -556,19 +627,21 @@
                 li.innerHTML = `
                     <span>${key}</span>
 
-                    <button
-                        type="button"
-                        onclick="loadSavedList('${key}')"
-                    >
-                        Load
-                    </button>
+                    <div class="actions">
+                        <button
+                            type="button"
+                            onclick="loadSavedList('${key}')"
+                        >
+                            Load
+                        </button>
 
-                    <button
-                        type="button"
-                        onclick="deleteSavedList('${key}')"
-                    >
-                        Delete
-                    </button>
+                        <button
+                            type="button"
+                            onclick="deleteSavedList('${key}')"
+                        >
+                            Delete
+                        </button>
+                    </div>
                 `;
 
 

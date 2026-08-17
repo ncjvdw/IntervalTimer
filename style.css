@@ -33,6 +33,13 @@ main {
     flex-direction: column;
 }
 
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 1;
+    cursor: pointer;
+}
+
+
 /* =========================
    TIMER
    ========================= */
@@ -63,7 +70,6 @@ main {
     font-weight: normal;
 }
 
-/* Outer ring */
 
 #timer::before {
     content: "";
@@ -95,7 +101,6 @@ main {
     z-index: 0;
 }
 
-/* Inner ring */
 
 #timer::after {
     content: "";
@@ -150,11 +155,6 @@ main {
     line-height: 1.15;
 
     text-align: center;
-
-    /*
-     * Keeps long exercise names inside
-     * the inner ring.
-     */
     overflow-wrap: anywhere;
     word-break: break-word;
 }
@@ -175,16 +175,9 @@ main {
     line-height: 1;
 
     text-align: center;
-
-    /*
-     * Prevents the browser's h2 styling
-     * from making the default 00:00 small.
-     */
     font-family: "Segoe UI", Arial, sans-serif;
 }
 
-/* Make sure empty exercise name doesn't
-   affect the timer layout */
 #timer .ex-name:empty {
     display: none;
 }
@@ -266,10 +259,6 @@ button:hover {
     margin-bottom: 0.4rem;
 }
 
-/* =========================
-   LIST ACTIONS
-   ========================= */
-
 #listActions {
     display: flex;
     justify-content: center;
@@ -283,6 +272,15 @@ button:hover {
     flex: 1;
     max-width: 150px;
     margin: 0;
+}
+
+#list li button:first-of-type {
+    margin-left: auto;
+    margin-right: 0.15rem;
+}
+
+#list li button:last-of-type {
+    margin-left: 0;
 }
 
 /* =========================
@@ -332,9 +330,9 @@ button:hover {
 }
 
 #Addexercise #timeInput {
-    width: 92px;
-    min-width: 92px;
-    max-width: 92px;
+    width: 88px;
+    min-width: 88px;
+    max-width: 88px;
 
     height: 46px;
 
@@ -382,34 +380,73 @@ button:hover {
 
 dialog {
     background: rgba(0, 0, 0, 0.96);
-
     color: #ffffff;
-
     border: 1px solid rgba(156, 252, 151, 0.3);
-
     border-radius: 8px;
-
     padding: 1.5rem;
+    max-width: 400px;
+    width: 90%;
 }
 
 dialog::backdrop {
     background: rgba(0, 0, 0, 0.75);
 }
 
-dialog input {
-    background: rgba(0, 0, 0, 0.85);
-
-    border: 1px solid rgba(156, 252, 151, 0.25);
-
-    color: #ffffff;
-
-    border-radius: 6px;
-
-    padding: 0.5rem;
-
-    margin: 0.75rem 0;
-
+dialog .edit-inputs {
+    display: flex;
+    gap: 0.4rem;
     width: 100%;
+}
+
+dialog #editExerciseInput {
+    flex: 1;
+    min-width: 0;
+}
+
+dialog #editTimeInput {
+    width: 100;
+    min-width: 100;
+    max-width: 100px;
+}
+
+dialog input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 46px;
+    margin: 0.4rem 0;
+    background: rgba(81, 91, 58, 0.16);
+    border: 1px solid rgba(156, 252, 151, 0.25);
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 0 0.75rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+dialog input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 1;
+    cursor: pointer;
+}
+
+dialog .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    width: 100%;
+    margin-top: 1.25rem;
+}
+
+#list li .actions,
+#savedListContainer li .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+#list li .actions button,
+#savedListContainer li .actions button,
+dialog button {
+    margin: 0;
 }
 
 /* =========================
